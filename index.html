@@ -435,9 +435,9 @@ h3 { margin: 0; font-size: 20px; }
 }
 
 .btn-download {
-  background: var(--black);
-  border-color: var(--black);
-  color: #fff;
+  background: var(--yellow);
+  border-color: #d7d700;
+  color: #000;
 }
 
 .btn-ghost {
@@ -490,7 +490,9 @@ h3 { margin: 0; font-size: 20px; }
 .file-list .file-size { flex: 0 0 auto; color: var(--muted); }
 
 .build-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.build-actions .btn { min-width: 150px; }
+.build-actions .btn { min-width: 190px; }
+.zip-action-btn { min-height: 48px; padding-inline: 22px; }
+.zip-action-btn.is-generating { cursor: wait; opacity: 0.82; }
 
 .progress-wrap { margin-top: 18px; }
 .progress-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 13px; }
@@ -671,6 +673,76 @@ html[data-theme="light"] .vendas-card .branch-title {
   border-style: solid;
 }
 
+/* Aviso pequeno do próprio site para arquivos repetidos */
+.toast-region {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 10020;
+  width: min(380px, calc(100% - 36px));
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.site-toast {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--yellow);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .28);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.site-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.site-toast-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--yellow);
+  color: #000;
+  font-weight: 950;
+  font-size: 18px;
+}
+
+.site-toast-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.site-toast-copy strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.site-toast-copy span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-toast { transition: none; }
+}
+
 /* Modal de confirmação para ZIP incompleto */
 .modal-backdrop {
   position: fixed;
@@ -779,7 +851,7 @@ body.modal-open {
   .modal-actions .btn { width: 100%; }
 }
 
-</style>
+  </style>
 </head>
 <body>
   <main class="page-shell">
@@ -931,8 +1003,7 @@ body.modal-open {
       </div>
 
       <div class="build-actions">
-        <button id="generate-btn" class="btn btn-primary" type="button">Gerar ZIP</button>
-        <button id="download-btn" class="btn btn-download" type="button" disabled>Baixar ZIP</button>
+        <button id="zip-action-btn" class="btn btn-primary zip-action-btn" type="button">Gerar ZIP</button>
       </div>
 
       <div id="progress-wrap" class="progress-wrap" hidden>
@@ -980,6 +1051,7 @@ body.modal-open {
   </template>
 
 
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
 
   <div id="missing-modal" class="modal-backdrop" hidden>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="missing-modal-title" aria-describedby="missing-modal-text">
@@ -1034,8 +1106,7 @@ body.modal-open {
     totalFiles: document.getElementById('total-files'),
     totalSize: document.getElementById('total-size'),
     clearAll: document.getElementById('clear-all-btn'),
-    generate: document.getElementById('generate-btn'),
-    download: document.getElementById('download-btn'),
+    zipAction: document.getElementById('zip-action-btn'),
     buildStatus: document.getElementById('build-status'),
     progressWrap: document.getElementById('progress-wrap'),
     progressLabel: document.getElementById('progress-label'),
@@ -1050,7 +1121,8 @@ body.modal-open {
     missingModal: document.getElementById('missing-modal'),
     missingFilesList: document.getElementById('missing-files-list'),
     missingCancel: document.getElementById('missing-cancel-btn'),
-    missingConfirm: document.getElementById('missing-confirm-btn')
+    missingConfirm: document.getElementById('missing-confirm-btn'),
+    toastRegion: document.getElementById('toast-region')
   };
 
   function init() {
@@ -1069,6 +1141,7 @@ body.modal-open {
 
     renderDynamicSlots();
     bindStaticEvents();
+    setZipActionMode('generate');
     refreshUI();
   }
 
@@ -1127,7 +1200,7 @@ body.modal-open {
       showMessage('Todos os arquivos foram removidos.', '');
     });
 
-    els.generate.addEventListener('click', () => generateZip());
+    els.zipAction.addEventListener('click', handleZipAction);
 
     els.missingCancel.addEventListener('click', closeMissingModal);
     els.missingConfirm.addEventListener('click', () => {
@@ -1143,15 +1216,52 @@ body.modal-open {
       if (event.key === 'Escape' && !els.missingModal.hidden) closeMissingModal();
     });
 
-    els.download.addEventListener('click', () => {
-      if (!state.zipBlobUrl || !state.zipBlob) return;
-      const a = document.createElement('a');
-      a.href = state.zipBlobUrl;
-      a.download = `${state.generatedName}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    });
+
+  }
+
+  function handleZipAction() {
+    if (state.zipBlobUrl && state.zipBlob) {
+      downloadGeneratedZip();
+      return;
+    }
+    generateZip();
+  }
+
+  function downloadGeneratedZip() {
+    if (!state.zipBlobUrl || !state.zipBlob) return;
+    const a = document.createElement('a');
+    a.href = state.zipBlobUrl;
+    a.download = `${state.generatedName}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function setZipActionMode(mode, percent = null) {
+    els.zipAction.classList.remove('btn-primary', 'btn-download', 'is-generating');
+
+    if (mode === 'download') {
+      els.zipAction.disabled = false;
+      els.zipAction.classList.add('btn-download');
+      els.zipAction.textContent = '⬇ Baixar ZIP';
+      els.zipAction.setAttribute('aria-label', 'Baixar ZIP gerado');
+      return;
+    }
+
+    els.zipAction.classList.add('btn-primary');
+
+    if (mode === 'generating') {
+      const safePercent = Number.isFinite(percent) ? Math.max(0, Math.min(100, Math.round(percent))) : 0;
+      els.zipAction.disabled = true;
+      els.zipAction.classList.add('is-generating');
+      els.zipAction.textContent = `Gerando ZIP… ${safePercent}%`;
+      els.zipAction.setAttribute('aria-label', `Gerando ZIP, ${safePercent}% concluído`);
+      return;
+    }
+
+    els.zipAction.disabled = false;
+    els.zipAction.textContent = 'Gerar ZIP';
+    els.zipAction.setAttribute('aria-label', 'Gerar ZIP');
   }
 
   function toggleTheme() {
@@ -1292,21 +1402,60 @@ body.modal-open {
     button.textContent = busy ? 'Lendo arquivos…' : 'Selecionar arquivos';
   }
 
+  function fileIdentity(item) {
+    const file = item?.file;
+    if (!(file instanceof File)) return '';
+    // O navegador não expõe o caminho absoluto do arquivo. Nome + tamanho + data de
+    // modificação é a melhor impressão digital local para reconhecer o MESMO arquivo.
+    const name = String(file.name || '').toLocaleLowerCase('pt-BR');
+    return `${name}::${file.size}::${file.lastModified}`;
+  }
+
   function addFilesToSlot(slotId, entries) {
     const current = state.slots.get(slotId) || [];
-    const valid = entries.filter(item => item && item.file instanceof File && item.file.size >= 0);
-    state.slots.set(slotId, dedupeFiles([...current, ...valid]));
-    invalidateGeneratedZip();
-    refreshTotals();
-    hideMessage();
+    const valid = entries
+      .filter(item => item && item.file instanceof File && item.file.size >= 0)
+      .map(item => ({
+        file: item.file,
+        relativePath: sanitizeRelativePath(item.relativePath || item.file.name)
+      }));
+
+    const existingKeys = new Set(current.map(fileIdentity));
+    const batchKeys = new Set();
+    const additions = [];
+    const duplicates = [];
+
+    valid.forEach(item => {
+      const key = fileIdentity(item);
+      if (!key) return;
+      if (existingKeys.has(key) || batchKeys.has(key)) {
+        duplicates.push(item);
+        return;
+      }
+      batchKeys.add(key);
+      additions.push(item);
+    });
+
+    if (additions.length > 0) {
+      state.slots.set(slotId, [...current, ...additions]);
+      invalidateGeneratedZip();
+      refreshTotals();
+      hideMessage();
+    }
+
+    if (duplicates.length > 0) {
+      showDuplicateToast(slotId, duplicates);
+    }
+
+    return { added: additions.length, duplicates: duplicates.length };
   }
 
   function dedupeFiles(items) {
     const map = new Map();
     items.forEach(item => {
       const path = sanitizeRelativePath(item.relativePath || item.file.name);
-      const key = `${path}::${item.file.size}::${item.file.lastModified}`;
-      map.set(key, { file: item.file, relativePath: path });
+      const normalized = { file: item.file, relativePath: path };
+      map.set(fileIdentity(normalized), normalized);
     });
     return Array.from(map.values());
   }
@@ -1314,22 +1463,38 @@ body.modal-open {
   async function extractDroppedFiles(dataTransfer) {
     if (!dataTransfer) return [];
 
-    const items = Array.from(dataTransfer.items || []);
-    const supportsEntries = items.some(item => typeof item.webkitGetAsEntry === 'function');
-
-    if (supportsEntries) {
-      const output = [];
-      for (const item of items) {
-        const entry = item.webkitGetAsEntry?.();
-        if (entry) {
-          const nested = await readEntry(entry, '');
-          output.push(...nested);
+    // Capture tudo de forma síncrona enquanto o evento de drop ainda está ativo.
+    // Alguns navegadores invalidam DataTransferItem após o primeiro await, o que fazia
+    // um drop com vários arquivos ler apenas o primeiro item.
+    const filesSnapshot = Array.from(dataTransfer.files || []);
+    const itemSnapshot = Array.from(dataTransfer.items || []);
+    const entrySnapshot = itemSnapshot
+      .map(item => {
+        try {
+          return typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null;
+        } catch {
+          return null;
         }
-      }
+      })
+      .filter(Boolean);
+
+    const hasDirectory = entrySnapshot.some(entry => entry.isDirectory);
+
+    // Para múltiplos arquivos simples, FileList é o caminho mais confiável e preserva todos.
+    if (filesSnapshot.length > 0 && !hasDirectory) {
+      return filesSnapshot.map(file => ({
+        file,
+        relativePath: sanitizeRelativePath(file.webkitRelativePath || file.name)
+      }));
+    }
+
+    if (entrySnapshot.length > 0) {
+      const nestedResults = await Promise.all(entrySnapshot.map(entry => readEntry(entry, '')));
+      const output = nestedResults.flat();
       if (output.length) return output;
     }
 
-    return Array.from(dataTransfer.files || []).map(file => ({
+    return filesSnapshot.map(file => ({
       file,
       relativePath: sanitizeRelativePath(file.webkitRelativePath || file.name)
     }));
@@ -1356,6 +1521,57 @@ body.modal-open {
     }
 
     return [];
+  }
+
+  function showDuplicateToast(slotId, duplicates) {
+    if (!els.toastRegion || !duplicates.length) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'site-toast site-toast-warning';
+    toast.setAttribute('role', 'status');
+
+    const icon = document.createElement('span');
+    icon.className = 'site-toast-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '!';
+
+    const copy = document.createElement('div');
+    copy.className = 'site-toast-copy';
+
+    const title = document.createElement('strong');
+    title.textContent = duplicates.length === 1 ? 'Arquivo repetido' : 'Arquivos repetidos';
+
+    const detail = document.createElement('span');
+    const section = getSlotDisplayName(slotId);
+    if (duplicates.length === 1) {
+      detail.textContent = `${duplicates[0].file.name} já está em ${section}.`;
+    } else {
+      const names = duplicates.slice(0, 2).map(item => item.file.name).join(', ');
+      const extra = duplicates.length > 2 ? ` e mais ${duplicates.length - 2}` : '';
+      detail.textContent = `${names}${extra} já ${duplicates.length === 1 ? 'está' : 'estão'} nesta seção.`;
+    }
+
+    copy.append(title, detail);
+    toast.append(icon, copy);
+    els.toastRegion.appendChild(toast);
+
+    // Mantém no máximo três avisos para não poluir a tela.
+    while (els.toastRegion.children.length > 3) {
+      els.toastRegion.firstElementChild?.remove();
+    }
+
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+    const timer = setTimeout(() => dismissToast(toast), 3600);
+    toast.addEventListener('click', () => {
+      clearTimeout(timer);
+      dismissToast(toast);
+    }, { once: true });
+  }
+
+  function dismissToast(toast) {
+    if (!toast?.isConnected) return;
+    toast.classList.remove('is-visible');
+    setTimeout(() => toast.remove(), 180);
   }
 
   function updateSlotUI(node, slotId) {
@@ -1464,8 +1680,7 @@ body.modal-open {
       return;
     }
 
-    els.generate.disabled = true;
-    els.download.disabled = true;
+    setZipActionMode('generating', 0);
     els.clearAll.disabled = true;
     els.company.disabled = true;
     els.month.disabled = true;
@@ -1485,7 +1700,7 @@ body.modal-open {
       state.generatedName = rootName;
 
       updateProgress(100, 'ZIP concluído');
-      els.download.disabled = false;
+      setZipActionMode('download');
       els.buildStatus.textContent = 'ZIP pronto para download';
       showMessage(`ZIP gerado com sucesso: ${rootName}.zip (${formatBytes(blob.size)}).`, 'success');
     } catch (error) {
@@ -1494,7 +1709,7 @@ body.modal-open {
       showMessage(`Erro ao gerar o ZIP: ${error?.message || 'erro desconhecido'}.`, 'error');
       invalidateGeneratedZip();
     } finally {
-      els.generate.disabled = false;
+      if (!state.zipBlobUrl || !state.zipBlob) setZipActionMode('generate');
       els.clearAll.disabled = false;
       els.company.disabled = false;
       els.month.disabled = false;
@@ -1529,7 +1744,7 @@ body.modal-open {
     if (els.missingModal.hidden) return;
     els.missingModal.hidden = true;
     document.body.classList.remove('modal-open');
-    els.generate.focus();
+    els.zipAction.focus();
   }
 
   function collectZipEntries() {
@@ -1802,6 +2017,9 @@ body.modal-open {
     els.progressPercent.textContent = `${rounded}%`;
     els.progressLabel.textContent = label;
     els.progressTrack.setAttribute('aria-valuenow', String(rounded));
+    if (els.zipAction.classList.contains('is-generating')) {
+      setZipActionMode('generating', rounded);
+    }
   }
 
   function invalidateGeneratedZip() {
@@ -1811,7 +2029,7 @@ body.modal-open {
     }
     state.zipBlob = null;
     state.generatedName = '';
-    els.download.disabled = true;
+    setZipActionMode('generate');
     els.buildStatus.textContent = 'Pronto para gerar';
     els.progressWrap.hidden = true;
     updateProgress(0, 'Preparando arquivos…');
@@ -1865,6 +2083,6 @@ body.modal-open {
   init();
 })();
 
-</script>
+  </script>
 </body>
 </html>
