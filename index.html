@@ -6,93 +6,97 @@
   <meta name="description" content="Organizador de Movimento Fiscal para DNSA/NSA, com geração local de ZIP." />
   <title>Movimento Fiscal | DNSA / NSA</title>
   <script>
+    // Tema escuro é o padrão. Se o usuário já escolheu um tema, respeita a preferência salva.
     try {
       const savedTheme = localStorage.getItem('movimentoFiscalTheme');
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        document.documentElement.dataset.theme = savedTheme;
-      }
-    } catch (_) {}
+      document.documentElement.dataset.theme =
+        savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
+    } catch (_) {
+      document.documentElement.dataset.theme = 'dark';
+    }
   </script>
   <style>
 :root {
+  /* Tema claro: fundo cinza suave + cartões brancos para criar separação visual. */
   --yellow: #ffff00;
-  --yellow-soft: #fffec7;
-  --black: #101010;
-  --text: #1d1d1f;
-  --muted: #66676b;
-  --border: #dedede;
+  --yellow-soft: #fffbd1;
+  --black: #111214;
+  --text: #111318;
+  --muted: #5d636c;
+  --border: #c9ced5;
   --surface: #ffffff;
-  --surface-soft: #f7f7f5;
-  --danger: #9d1c1c;
-  --success: #19743a;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.08);
-  --page-bg: #f3f3f0;
-  --eyebrow: #4e4e4e;
-  --input-bg: #ffffff;
-  --focus-border: #7f7f00;
-  --preview-border: #c9c9c3;
-  --tree-top: #ffffff;
-  --tree-bottom: #fafafa;
-  --folder-icon: #777777;
+  --surface-soft: #f1f3f5;
+  --danger: #a51e2c;
+  --success: #176b36;
+  --shadow: 0 14px 34px rgba(17, 24, 39, 0.10);
+  --page-bg: #e7e9ec;
+  --eyebrow: #4b515a;
+  --input-bg: #fbfcfd;
+  --focus-border: #777700;
+  --preview-border: #aeb4bc;
+  --tree-top: #f9fafb;
+  --tree-bottom: #eef1f4;
+  --folder-icon: #5e646d;
   --branch-bg: #ffffff;
-  --branch-title-bg: #fbfbf8;
-  --connector: #303030;
-  --drop-border: #c9c9c4;
+  --branch-title-bg: #f2f4f6;
+  --connector: #34383e;
+  --drop-border: #aeb5be;
   --drop-bg: #ffffff;
-  --drag-border: #7b7b00;
-  --ghost-bg: #ffffff;
-  --small-btn-bg: #f1f1ee;
-  --small-btn-border: #e0e0db;
-  --progress-bg: #ecece8;
-  --progress-border: #ddddda;
-  --progress-fill: #101010;
-  --message-bg: #f4f4f1;
-  --error-bg: #fff1f1;
-  --error-border: #e8bcbc;
-  --success-bg: #effaf2;
-  --success-border: #b9dfc3;
-  --footer-text: #777777;
-  --hover-border: #999999;
+  --drag-border: #777700;
+  --ghost-bg: #f7f8fa;
+  --small-btn-bg: #eceff2;
+  --small-btn-border: #cbd1d8;
+  --progress-bg: #dfe3e7;
+  --progress-border: #c6ccd3;
+  --progress-fill: #111214;
+  --message-bg: #eef1f4;
+  --error-bg: #fff0f1;
+  --error-border: #e3b7bd;
+  --success-bg: #eaf7ee;
+  --success-border: #acd4b8;
+  --footer-text: #666d76;
+  --hover-border: #737b85;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --yellow-soft: #353500;
-  --text: #f3f3ef;
-  --muted: #aaa9a3;
-  --border: #383a40;
-  --surface: #191a1e;
-  --surface-soft: #24262b;
-  --danger: #ff9d9d;
-  --success: #79d79b;
-  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
-  --page-bg: #0f1013;
-  --eyebrow: #b8b7b0;
-  --input-bg: #202126;
-  --focus-border: #d6d600;
-  --preview-border: #505158;
-  --tree-top: #1b1c20;
-  --tree-bottom: #17181c;
-  --folder-icon: #aaa9a3;
-  --branch-bg: #1d1e22;
-  --branch-title-bg: #232428;
-  --connector: #d8d7d0;
-  --drop-border: #55565e;
-  --drop-bg: #1c1d21;
-  --drag-border: #d6d600;
-  --ghost-bg: #202126;
-  --small-btn-bg: #292b30;
-  --small-btn-border: #404249;
-  --progress-bg: #292b30;
-  --progress-border: #41434a;
+  /* Tema principal: preto/grafite com contraste alto e amarelo apenas como destaque. */
+  --yellow-soft: #303000;
+  --text: #f5f6f7;
+  --muted: #9ea5af;
+  --border: #2d3138;
+  --surface: #121419;
+  --surface-soft: #1a1d23;
+  --danger: #ff9ca7;
+  --success: #7ad99d;
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  --page-bg: #080a0d;
+  --eyebrow: #b7bdc6;
+  --input-bg: #181b20;
+  --focus-border: #e4e400;
+  --preview-border: #464b54;
+  --tree-top: #15181d;
+  --tree-bottom: #101216;
+  --folder-icon: #a9afb8;
+  --branch-bg: #15181d;
+  --branch-title-bg: #1b1e24;
+  --connector: #d7dbe0;
+  --drop-border: #464c55;
+  --drop-bg: #111419;
+  --drag-border: #e5e500;
+  --ghost-bg: #181b20;
+  --small-btn-bg: #20242a;
+  --small-btn-border: #363b44;
+  --progress-bg: #22262c;
+  --progress-border: #363b44;
   --progress-fill: #ffff00;
-  --message-bg: #25272c;
-  --error-bg: #351f22;
-  --error-border: #6a383e;
-  --success-bg: #173124;
+  --message-bg: #1c2026;
+  --error-bg: #321d22;
+  --error-border: #69343c;
+  --success-bg: #173023;
   --success-border: #315d42;
-  --footer-text: #96958f;
-  --hover-border: #7d7f87;
+  --footer-text: #8d949e;
+  --hover-border: #727985;
 }
 
 * { box-sizing: border-box; }
@@ -101,6 +105,7 @@ html { color-scheme: light; }
 
 body {
   margin: 0;
+  min-height: 100%;
   background: var(--page-bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -133,6 +138,24 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   padding: 32px;
   margin-bottom: 18px;
   border-top: 8px solid var(--yellow);
+}
+
+html[data-theme="light"] .hero,
+html[data-theme="light"] .config-panel,
+html[data-theme="light"] .workspace,
+html[data-theme="light"] .build-panel {
+  border-color: #bcc2ca;
+}
+
+html[data-theme="light"] .tree {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+html[data-theme="dark"] .hero,
+html[data-theme="dark"] .config-panel,
+html[data-theme="dark"] .workspace,
+html[data-theme="dark"] .build-panel {
+  border-color: #30343c;
 }
 
 .hero-actions {
