@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Organizador de Movimento Fiscal para DNSA/NSA, com geração local de ZIP." />
+  <title>Movimento Fiscal | DNSA / NSA</title>
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('movimentoFiscalTheme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    } catch (_) {}
+  </script>
+  <style>
+:root {
+  --yellow: #ffff00;
+  --yellow-soft: #fffec7;
+  --black: #101010;
+  --text: #1d1d1f;
+  --muted: #66676b;
+  --border: #dedede;
+  --surface: #ffffff;
+  --surface-soft: #f7f7f5;
+  --danger: #9d1c1c;
+  --success: #19743a;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.08);
+  --page-bg: #f3f3f0;
+  --eyebrow: #4e4e4e;
+  --input-bg: #ffffff;
+  --focus-border: #7f7f00;
+  --preview-border: #c9c9c3;
+  --tree-top: #ffffff;
+  --tree-bottom: #fafafa;
+  --folder-icon: #777777;
+  --branch-bg: #ffffff;
+  --branch-title-bg: #fbfbf8;
+  --connector: #303030;
+  --drop-border: #c9c9c4;
+  --drop-bg: #ffffff;
+  --drag-border: #7b7b00;
+  --ghost-bg: #ffffff;
+  --small-btn-bg: #f1f1ee;
+  --small-btn-border: #e0e0db;
+  --progress-bg: #ecece8;
+  --progress-border: #ddddda;
+  --progress-fill: #101010;
+  --message-bg: #f4f4f1;
+  --error-bg: #fff1f1;
+  --error-border: #e8bcbc;
+  --success-bg: #effaf2;
+  --success-border: #b9dfc3;
+  --footer-text: #777777;
+  --hover-border: #999999;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --yellow-soft: #353500;
+  --text: #f3f3ef;
+  --muted: #aaa9a3;
+  --border: #383a40;
+  --surface: #191a1e;
+  --surface-soft: #24262b;
+  --danger: #ff9d9d;
+  --success: #79d79b;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --page-bg: #0f1013;
+  --eyebrow: #b8b7b0;
+  --input-bg: #202126;
+  --focus-border: #d6d600;
+  --preview-border: #505158;
+  --tree-top: #1b1c20;
+  --tree-bottom: #17181c;
+  --folder-icon: #aaa9a3;
+  --branch-bg: #1d1e22;
+  --branch-title-bg: #232428;
+  --connector: #d8d7d0;
+  --drop-border: #55565e;
+  --drop-bg: #1c1d21;
+  --drag-border: #d6d600;
+  --ghost-bg: #202126;
+  --small-btn-bg: #292b30;
+  --small-btn-border: #404249;
+  --progress-bg: #292b30;
+  --progress-border: #41434a;
+  --progress-fill: #ffff00;
+  --message-bg: #25272c;
+  --error-bg: #351f22;
+  --error-border: #6a383e;
+  --success-bg: #173124;
+  --success-border: #315d42;
+  --footer-text: #96958f;
+  --hover-border: #7d7f87;
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: light; }
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.page-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 28px auto;
+}
+
+.hero,
+.config-panel,
+.workspace,
+.build-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px;
+  margin-bottom: 18px;
+  border-top: 8px solid var(--yellow);
+}
+
+.hero-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.theme-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--eyebrow);
+}
+
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 8px; font-size: clamp(32px, 5vw, 52px); line-height: 1; }
+h2 { margin: 0; font-size: 21px; }
+h3 { margin: 0; font-size: 20px; }
+
+.subtitle {
+  max-width: 760px;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.privacy-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 750;
+  background: var(--surface-soft);
+}
+
+.privacy-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.config-panel,
+.workspace,
+.build-panel { padding: 26px; margin-bottom: 18px; }
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.section-heading > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.step-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--black);
+  color: var(--yellow);
+  font-weight: 900;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 0.8fr;
+  gap: 14px;
+}
+
+.field { display: grid; gap: 7px; }
+.field > span { font-weight: 800; font-size: 13px; }
+
+.field select,
+.field input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--input-bg);
+  padding: 10px 12px;
+  color: var(--text);
+  outline: none;
+}
+
+.field select:focus,
+.field input:focus,
+.dropzone:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid rgba(202, 202, 0, 0.28);
+  outline-offset: 2px;
+  border-color: var(--focus-border);
+}
+
+.name-preview {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  border: 1px dashed var(--preview-border);
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.name-preview span { color: var(--muted); font-size: 13px; }
+.name-preview strong { word-break: break-word; }
+
+.summary-inline,
+.status-text { color: var(--muted); font-size: 14px; }
+
+.workspace-help { color: var(--muted); margin-bottom: 18px; }
+
+.tree {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(180deg, var(--tree-top), var(--tree-bottom));
+}
+
+.tree-root-label {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  word-break: break-word;
+}
+
+.folder-icon { font-size: 18px; color: var(--folder-icon); }
+
+.tree-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.branch-card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--branch-bg);
+}
+
+.branch-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--branch-title-bg);
+}
+
+.folder-chip {
+  background: var(--yellow);
+  color: #000;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: .08em;
+  padding: 5px 7px;
+  border-radius: 5px;
+  border: 1px solid #d9d900;
+}
+
+.branch-content { padding: 16px; display: grid; gap: 18px; }
+.sub-branch { min-width: 0; }
+
+.sub-branch-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.connector-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--connector);
+  border-radius: 50%;
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.single-slot-branch .slot-grid { grid-template-columns: 1fr; }
+
+.dropzone {
+  min-width: 0;
+  padding: 14px;
+  border: 2px dashed var(--drop-border);
+  border-radius: 13px;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+  background: var(--drop-bg);
+}
+
+.dropzone.is-dragging {
+  border-color: var(--drag-border);
+  background: var(--yellow-soft);
+  transform: translateY(-1px);
+}
+
+.dropzone.has-files { border-style: solid; }
+
+.dropzone-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.drop-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--black);
+  color: var(--yellow);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.slot-title { display: block; font-size: 15px; margin-bottom: 3px; }
+.slot-path { margin: 0; font-size: 11px; line-height: 1.35; color: var(--muted); word-break: break-word; }
+
+.dropzone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.btn {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-weight: 850;
+  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+}
+
+.btn:active:not(:disabled) { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--yellow);
+  border-color: #d7d700;
+  color: #000;
+}
+
+.btn-download {
+  background: var(--black);
+  border-color: var(--black);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: var(--ghost-bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-small { min-height: 36px; padding: 7px 10px; font-size: 12px; background: var(--small-btn-bg); border-color: var(--small-btn-border); }
+
+.slot-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.file-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  max-height: 132px;
+  overflow: auto;
+}
+
+.file-list:empty { display: none; }
+
+.file-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface-soft);
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+.file-list .file-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.file-list .file-size { flex: 0 0 auto; color: var(--muted); }
+
+.build-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.build-actions .btn { min-width: 150px; }
+
+.progress-wrap { margin-top: 18px; }
+.progress-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 13px; }
+.progress-track { height: 14px; overflow: hidden; background: var(--progress-bg); border-radius: 999px; border: 1px solid var(--progress-border); }
+.progress-bar { width: 0%; height: 100%; background: var(--progress-fill); transition: width .12s linear; }
+
+.message-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--message-bg);
+  border: 1px solid var(--border);
+  line-height: 1.4;
+  font-size: 13px;
+}
+
+.message-box.error { background: var(--error-bg); border-color: var(--error-border); color: var(--danger); }
+.message-box.success { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--footer-text);
+  font-size: 12px;
+  padding: 3px 4px 14px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) { filter: brightness(0.98); }
+  .dropzone:hover { border-color: var(--hover-border); }
+}
+
+@media (max-width: 820px) {
+  .tree-branches { grid-template-columns: 1fr; }
+  .config-grid { grid-template-columns: 1fr 1fr; }
+  .config-grid .field:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  .page-shell { width: min(100% - 18px, 1180px); margin: 10px auto; }
+  .hero, .config-panel, .workspace, .build-panel { border-radius: 14px; }
+  .hero { padding: 22px 18px; flex-direction: column; }
+  .hero-actions { width: 100%; align-items: stretch; }
+  .hero-actions .privacy-badge, .theme-toggle { justify-content: center; }
+  .config-panel, .workspace, .build-panel { padding: 18px; }
+  .section-heading { align-items: flex-start; }
+  .config-grid, .slot-grid { grid-template-columns: 1fr; }
+  .config-grid .field:last-child { grid-column: auto; }
+  .name-preview { align-items: flex-start; flex-direction: column; gap: 4px; }
+  footer { flex-direction: column; }
+}
+
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero" aria-labelledby="app-title">
+      <div>
+        <p class="eyebrow">DNSA / NSA • ORGANIZADOR DE ARQUIVOS</p>
+        <h1 id="app-title">Movimento Fiscal</h1>
+        <p class="subtitle">Arraste as notas para cada pasta, gere o ZIP e faça o download. Tudo acontece no seu navegador: nenhum arquivo é enviado para servidor.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="theme-toggle" class="btn btn-ghost theme-toggle" type="button" aria-pressed="false" title="Alternar entre tema claro e escuro">
+          <span id="theme-icon" class="theme-icon" aria-hidden="true">☾</span>
+          <span id="theme-label">Tema escuro</span>
+        </button>
+        <div class="privacy-badge" title="Os arquivos não saem do seu computador.">
+          <span class="privacy-dot" aria-hidden="true"></span>
+          Processamento local
+        </div>
+      </div>
+    </section>
+
+    <section class="config-panel" aria-labelledby="config-title">
+      <div class="section-heading">
+        <div>
+          <span class="step-badge">1</span>
+          <h2 id="config-title">Defina o movimento</h2>
+        </div>
+        <button id="clear-all-btn" class="btn btn-ghost" type="button">Limpar tudo</button>
+      </div>
+
+      <div class="config-grid">
+        <label class="field">
+          <span>Conta</span>
+          <select id="company-select">
+            <option value="DNSA">DNSA</option>
+            <option value="NSA">NSA</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Mês</span>
+          <select id="month-select"></select>
+        </label>
+
+        <label class="field">
+          <span>Ano</span>
+          <input id="year-input" type="number" inputmode="numeric" min="2000" max="2100" step="1" />
+        </label>
+      </div>
+
+      <div class="name-preview" aria-live="polite">
+        <span>Nome da pasta/ZIP</span>
+        <strong id="zip-name-preview"></strong>
+      </div>
+    </section>
+
+    <section class="workspace" aria-labelledby="workspace-title">
+      <div class="section-heading">
+        <div>
+          <span class="step-badge">2</span>
+          <h2 id="workspace-title">Distribua os arquivos</h2>
+        </div>
+        <div class="summary-inline" aria-live="polite">
+          <strong id="total-files">0</strong> arquivos • <strong id="total-size">0 B</strong>
+        </div>
+      </div>
+
+      <p class="workspace-help">Você pode arrastar arquivos ou pastas inteiras para qualquer área. Também é possível clicar em <strong>Selecionar arquivos</strong>.</p>
+
+      <div class="tree" id="tree-root">
+        <div class="tree-root-label">
+          <span class="folder-icon" aria-hidden="true">▾</span>
+          <strong id="tree-root-name"></strong>
+        </div>
+
+        <div class="tree-branches">
+          <section class="branch-card" aria-labelledby="compras-heading">
+            <div class="branch-title">
+              <span class="folder-chip">PASTA</span>
+              <h3 id="compras-heading">Compras</h3>
+            </div>
+
+            <div class="branch-content">
+              <div class="sub-branch">
+                <div class="sub-branch-title">
+                  <span class="connector-dot" aria-hidden="true"></span>
+                  <strong>Tiny</strong>
+                </div>
+                <div id="compras-tiny-slots" class="slot-grid"></div>
+              </div>
+
+              <div class="sub-branch single-slot-branch">
+                <div class="sub-branch-title">
+                  <span class="connector-dot" aria-hidden="true"></span>
+                  <strong>Mercado Livre</strong>
+                </div>
+                <div class="slot-grid">
+                  <div class="drop-slot" data-slot="compras_ml"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="branch-card" aria-labelledby="vendas-heading">
+            <div class="branch-title">
+              <span class="folder-chip">PASTA</span>
+              <h3 id="vendas-heading">Vendas</h3>
+            </div>
+
+            <div class="branch-content">
+              <div class="sub-branch single-slot-branch">
+                <div class="sub-branch-title">
+                  <span class="connector-dot" aria-hidden="true"></span>
+                  <strong>Tiny</strong>
+                </div>
+                <div class="slot-grid">
+                  <div class="drop-slot" data-slot="vendas_tiny"></div>
+                </div>
+              </div>
+
+              <div class="sub-branch single-slot-branch">
+                <div class="sub-branch-title">
+                  <span class="connector-dot" aria-hidden="true"></span>
+                  <strong>Mercado Livre</strong>
+                </div>
+                <div class="slot-grid">
+                  <div class="drop-slot" data-slot="vendas_ml"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="build-panel" aria-labelledby="build-title">
+      <div class="section-heading">
+        <div>
+          <span class="step-badge">3</span>
+          <h2 id="build-title">Gerar ZIP</h2>
+        </div>
+        <span id="build-status" class="status-text" aria-live="polite">Pronto para gerar</span>
+      </div>
+
+      <div class="build-actions">
+        <button id="generate-btn" class="btn btn-primary" type="button">Gerar ZIP</button>
+        <button id="download-btn" class="btn btn-download" type="button" disabled>Baixar ZIP</button>
+      </div>
+
+      <div id="progress-wrap" class="progress-wrap" hidden>
+        <div class="progress-meta">
+          <span id="progress-label">Preparando arquivos…</span>
+          <strong id="progress-percent">0%</strong>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progresso da geração do ZIP">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+      </div>
+
+      <div id="message-box" class="message-box" role="status" aria-live="polite" hidden></div>
+    </section>
+
+    <footer>
+      <span>Movimento Fiscal • DNSA / NSA</span>
+      <span>Funciona em GitHub Pages sem backend.</span>
+    </footer>
+  </main>
+
+  <template id="drop-slot-template">
+    <div class="dropzone" tabindex="0" role="button" aria-label="Adicionar arquivos">
+      <input class="file-input" type="file" multiple hidden />
+      <input class="folder-input" type="file" multiple webkitdirectory directory hidden />
+      <div class="dropzone-main">
+        <div class="drop-icon" aria-hidden="true">＋</div>
+        <div>
+          <strong class="slot-title"></strong>
+          <p class="slot-path"></p>
+        </div>
+      </div>
+      <div class="dropzone-actions">
+        <button class="btn btn-small select-files-btn" type="button">Selecionar arquivos</button>
+        <button class="btn btn-small select-folder-btn" type="button">Selecionar pasta</button>
+        <button class="btn btn-small btn-ghost clear-slot-btn" type="button">Limpar</button>
+      </div>
+      <div class="slot-stats" aria-live="polite">
+        <span class="slot-count">0 arquivos</span>
+        <span class="slot-size">0 B</span>
+      </div>
+      <ul class="file-list"></ul>
+    </div>
+  </template>
+
+  <script>
+(() => {
+  'use strict';
+
+  const MONTHS = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  const SLOT_DEFS = {
+    compras_tiny_nfe: { title: 'NFE', path: ['Compras', 'Tiny', 'NFE'] },
+    compras_tiny_nfce: { title: 'NFC', path: ['Compras', 'Tiny', 'NFC'] },
+    compras_tiny_nsa: { title: 'Arquivos', path: ['Compras', 'Tiny'] },
+    compras_ml: { title: 'Arquivos', path: ['Compras', 'Mercado Livre'] },
+    vendas_tiny: { title: 'Arquivos', path: ['Vendas', 'Tiny'] },
+    vendas_ml: { title: 'Arquivos', path: ['Vendas', 'Mercado Livre'] }
+  };
+
+  const state = {
+    company: 'DNSA',
+    month: new Date().getMonth(),
+    year: new Date().getFullYear(),
+    slots: new Map(),
+    zipBlobUrl: null,
+    zipBlob: null,
+    generatedName: ''
+  };
+
+  const els = {
+    company: document.getElementById('company-select'),
+    month: document.getElementById('month-select'),
+    year: document.getElementById('year-input'),
+    namePreview: document.getElementById('zip-name-preview'),
+    treeRootName: document.getElementById('tree-root-name'),
+    comprasTinySlots: document.getElementById('compras-tiny-slots'),
+    totalFiles: document.getElementById('total-files'),
+    totalSize: document.getElementById('total-size'),
+    clearAll: document.getElementById('clear-all-btn'),
+    generate: document.getElementById('generate-btn'),
+    download: document.getElementById('download-btn'),
+    buildStatus: document.getElementById('build-status'),
+    progressWrap: document.getElementById('progress-wrap'),
+    progressLabel: document.getElementById('progress-label'),
+    progressPercent: document.getElementById('progress-percent'),
+    progressBar: document.getElementById('progress-bar'),
+    progressTrack: document.querySelector('.progress-track'),
+    message: document.getElementById('message-box'),
+    template: document.getElementById('drop-slot-template'),
+    themeToggle: document.getElementById('theme-toggle'),
+    themeIcon: document.getElementById('theme-icon'),
+    themeLabel: document.getElementById('theme-label')
+  };
+
+  function init() {
+    syncThemeButton();
+
+    MONTHS.forEach((name, index) => {
+      const option = document.createElement('option');
+      option.value = String(index);
+      option.textContent = name;
+      els.month.appendChild(option);
+    });
+
+    els.company.value = state.company;
+    els.month.value = String(state.month);
+    els.year.value = String(state.year);
+
+    renderDynamicSlots();
+    bindStaticEvents();
+    refreshUI();
+  }
+
+  function bindStaticEvents() {
+    els.themeToggle.addEventListener('click', toggleTheme);
+
+    els.company.addEventListener('change', () => {
+      const previousCompany = state.company;
+      state.company = els.company.value;
+
+      // Preserve Tiny/Compras files when switching company in the most intuitive way possible.
+      if (previousCompany === 'DNSA' && state.company === 'NSA') {
+        const merged = [
+          ...(state.slots.get('compras_tiny_nfe') || []),
+          ...(state.slots.get('compras_tiny_nfce') || [])
+        ];
+        if (merged.length && !(state.slots.get('compras_tiny_nsa') || []).length) {
+          state.slots.set('compras_tiny_nsa', dedupeFiles(merged));
+        }
+      }
+
+      invalidateGeneratedZip();
+      renderDynamicSlots();
+      refreshUI();
+    });
+
+    els.month.addEventListener('change', () => {
+      state.month = clampNumber(Number(els.month.value), 0, 11, new Date().getMonth());
+      invalidateGeneratedZip();
+      refreshUI();
+    });
+
+    els.year.addEventListener('input', () => {
+      const raw = Number(els.year.value);
+      if (Number.isFinite(raw)) state.year = Math.round(raw);
+      invalidateGeneratedZip();
+      refreshUI();
+    });
+
+    els.year.addEventListener('blur', () => {
+      state.year = clampNumber(state.year, 2000, 2100, new Date().getFullYear());
+      els.year.value = String(state.year);
+      refreshUI();
+    });
+
+    els.clearAll.addEventListener('click', () => {
+      const hasFiles = getActiveSlotIds().some(id => (state.slots.get(id) || []).length > 0);
+      if (!hasFiles) {
+        showMessage('Não há arquivos para limpar.', '');
+        return;
+      }
+      state.slots.clear();
+      invalidateGeneratedZip();
+      renderDynamicSlots();
+      refreshUI();
+      showMessage('Todos os arquivos foram removidos.', '');
+    });
+
+    els.generate.addEventListener('click', generateZip);
+
+    els.download.addEventListener('click', () => {
+      if (!state.zipBlobUrl || !state.zipBlob) return;
+      const a = document.createElement('a');
+      a.href = state.zipBlobUrl;
+      a.download = `${state.generatedName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+
+    try {
+      localStorage.setItem('movimentoFiscalTheme', next);
+    } catch (_) {}
+
+    syncThemeButton();
+  }
+
+  function syncThemeButton() {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    els.themeIcon.textContent = isDark ? '☀' : '☾';
+    els.themeLabel.textContent = isDark ? 'Tema claro' : 'Tema escuro';
+    els.themeToggle.setAttribute('aria-pressed', String(isDark));
+    els.themeToggle.setAttribute('aria-label', isDark ? 'Ativar tema claro' : 'Ativar tema escuro');
+  }
+
+  function renderDynamicSlots() {
+    els.comprasTinySlots.innerHTML = '';
+
+    const tinySlots = state.company === 'DNSA'
+      ? ['compras_tiny_nfe', 'compras_tiny_nfce']
+      : ['compras_tiny_nsa'];
+
+    tinySlots.forEach(id => {
+      const holder = document.createElement('div');
+      holder.className = 'drop-slot';
+      holder.dataset.slot = id;
+      els.comprasTinySlots.appendChild(holder);
+    });
+
+    document.querySelectorAll('.drop-slot').forEach(mountDropSlot);
+  }
+
+  function mountDropSlot(holder) {
+    const slotId = holder.dataset.slot;
+    const def = SLOT_DEFS[slotId];
+    if (!def) return;
+
+    const node = els.template.content.firstElementChild.cloneNode(true);
+    const input = node.querySelector('.file-input');
+    const folderInput = node.querySelector('.folder-input');
+    const selectBtn = node.querySelector('.select-files-btn');
+    const selectFolderBtn = node.querySelector('.select-folder-btn');
+    const clearBtn = node.querySelector('.clear-slot-btn');
+
+    node.dataset.slot = slotId;
+    node.querySelector('.slot-title').textContent = def.title;
+    node.querySelector('.slot-path').textContent = def.path.join(' / ');
+
+    const chooseFiles = () => input.click();
+    const chooseFolder = () => folderInput.click();
+
+    node.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target === node) {
+        event.preventDefault();
+        chooseFiles();
+      }
+    });
+
+    selectBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      chooseFiles();
+    });
+
+    selectFolderBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      chooseFolder();
+    });
+
+    clearBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      state.slots.set(slotId, []);
+      invalidateGeneratedZip();
+      updateSlotUI(node, slotId);
+      refreshTotals();
+    });
+
+    input.addEventListener('change', () => {
+      const entries = Array.from(input.files || []).map(file => ({ file, relativePath: sanitizeRelativePath(file.name) }));
+      addFilesToSlot(slotId, entries);
+      input.value = '';
+      updateSlotUI(node, slotId);
+    });
+
+    folderInput.addEventListener('change', () => {
+      const entries = Array.from(folderInput.files || []).map(file => ({ file, relativePath: sanitizeRelativePath(file.webkitRelativePath || file.name) }));
+      addFilesToSlot(slotId, entries);
+      folderInput.value = '';
+      updateSlotUI(node, slotId);
+    });
+
+    ['dragenter', 'dragover'].forEach(type => {
+      node.addEventListener(type, event => {
+        event.preventDefault();
+        event.stopPropagation();
+        node.classList.add('is-dragging');
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      });
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+      node.addEventListener(type, event => {
+        event.preventDefault();
+        event.stopPropagation();
+        node.classList.remove('is-dragging');
+      });
+    });
+
+    node.addEventListener('drop', async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      node.classList.remove('is-dragging');
+
+      try {
+        setSlotBusy(node, true);
+        const entries = await extractDroppedFiles(event.dataTransfer);
+        addFilesToSlot(slotId, entries);
+      } catch (error) {
+        console.error(error);
+        showMessage('Não foi possível ler um ou mais itens arrastados. Tente usar “Selecionar arquivos”.', 'error');
+      } finally {
+        setSlotBusy(node, false);
+        updateSlotUI(node, slotId);
+      }
+    });
+
+    holder.replaceWith(node);
+    updateSlotUI(node, slotId);
+  }
+
+  function setSlotBusy(node, busy) {
+    node.setAttribute('aria-busy', busy ? 'true' : 'false');
+    const button = node.querySelector('.select-files-btn');
+    const folderButton = node.querySelector('.select-folder-btn');
+    button.disabled = busy;
+    folderButton.disabled = busy;
+    button.textContent = busy ? 'Lendo arquivos…' : 'Selecionar arquivos';
+  }
+
+  function addFilesToSlot(slotId, entries) {
+    const current = state.slots.get(slotId) || [];
+    const valid = entries.filter(item => item && item.file instanceof File && item.file.size >= 0);
+    state.slots.set(slotId, dedupeFiles([...current, ...valid]));
+    invalidateGeneratedZip();
+    refreshTotals();
+    hideMessage();
+  }
+
+  function dedupeFiles(items) {
+    const map = new Map();
+    items.forEach(item => {
+      const path = sanitizeRelativePath(item.relativePath || item.file.name);
+      const key = `${path}::${item.file.size}::${item.file.lastModified}`;
+      map.set(key, { file: item.file, relativePath: path });
+    });
+    return Array.from(map.values());
+  }
+
+  async function extractDroppedFiles(dataTransfer) {
+    if (!dataTransfer) return [];
+
+    const items = Array.from(dataTransfer.items || []);
+    const supportsEntries = items.some(item => typeof item.webkitGetAsEntry === 'function');
+
+    if (supportsEntries) {
+      const output = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) {
+          const nested = await readEntry(entry, '');
+          output.push(...nested);
+        }
+      }
+      if (output.length) return output;
+    }
+
+    return Array.from(dataTransfer.files || []).map(file => ({
+      file,
+      relativePath: sanitizeRelativePath(file.webkitRelativePath || file.name)
+    }));
+  }
+
+  async function readEntry(entry, parentPath) {
+    if (entry.isFile) {
+      const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+      return [{ file, relativePath: sanitizeRelativePath(`${parentPath}${file.name}`) }];
+    }
+
+    if (entry.isDirectory) {
+      const nextParent = `${parentPath}${entry.name}/`;
+      const reader = entry.createReader();
+      const children = [];
+      let batch = [];
+      do {
+        batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        children.push(...batch);
+      } while (batch.length > 0);
+
+      const nestedResults = await Promise.all(children.map(child => readEntry(child, nextParent)));
+      return nestedResults.flat();
+    }
+
+    return [];
+  }
+
+  function updateSlotUI(node, slotId) {
+    const items = state.slots.get(slotId) || [];
+    const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
+
+    node.classList.toggle('has-files', items.length > 0);
+    node.querySelector('.slot-count').textContent = `${items.length} ${items.length === 1 ? 'arquivo' : 'arquivos'}`;
+    node.querySelector('.slot-size').textContent = formatBytes(totalBytes);
+    node.querySelector('.clear-slot-btn').disabled = items.length === 0;
+
+    const list = node.querySelector('.file-list');
+    list.innerHTML = '';
+
+    const maxVisible = 6;
+    items.slice(0, maxVisible).forEach(item => {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      const size = document.createElement('span');
+      name.className = 'file-name';
+      size.className = 'file-size';
+      name.textContent = item.relativePath;
+      name.title = item.relativePath;
+      size.textContent = formatBytes(item.file.size);
+      li.append(name, size);
+      list.appendChild(li);
+    });
+
+    if (items.length > maxVisible) {
+      const li = document.createElement('li');
+      const more = document.createElement('span');
+      more.className = 'file-name';
+      more.textContent = `+ ${items.length - maxVisible} arquivo(s)`;
+      li.appendChild(more);
+      list.appendChild(li);
+    }
+  }
+
+  function refreshUI() {
+    const rootName = getRootName();
+    els.namePreview.textContent = `${rootName}.zip`;
+    els.treeRootName.textContent = rootName;
+    refreshAllSlots();
+    refreshTotals();
+  }
+
+  function refreshAllSlots() {
+    document.querySelectorAll('.dropzone[data-slot]').forEach(node => {
+      updateSlotUI(node, node.dataset.slot);
+    });
+  }
+
+  function refreshTotals() {
+    const ids = getActiveSlotIds();
+    const all = ids.flatMap(id => state.slots.get(id) || []);
+    const totalSize = all.reduce((sum, item) => sum + item.file.size, 0);
+    els.totalFiles.textContent = String(all.length);
+    els.totalSize.textContent = formatBytes(totalSize);
+  }
+
+  function getActiveSlotIds() {
+    return state.company === 'DNSA'
+      ? ['compras_tiny_nfe', 'compras_tiny_nfce', 'compras_ml', 'vendas_tiny', 'vendas_ml']
+      : ['compras_tiny_nsa', 'compras_ml', 'vendas_tiny', 'vendas_ml'];
+  }
+
+  function getRootName() {
+    const monthName = MONTHS[clampNumber(state.month, 0, 11, 0)];
+    const safeYear = clampNumber(state.year, 2000, 2100, new Date().getFullYear());
+    return `Movimento Fiscal (${state.company}) (${monthName}) de (${safeYear})`;
+  }
+
+  async function generateZip() {
+    const year = clampNumber(Number(els.year.value), 2000, 2100, NaN);
+    if (!Number.isFinite(year)) {
+      showMessage('Informe um ano válido entre 2000 e 2100.', 'error');
+      els.year.focus();
+      return;
+    }
+    state.year = year;
+    els.year.value = String(year);
+
+    const activeSlotIds = getActiveSlotIds();
+    const fileCount = activeSlotIds.reduce((sum, id) => sum + (state.slots.get(id) || []).length, 0);
+
+    if (fileCount === 0) {
+      showMessage('Adicione pelo menos um arquivo antes de gerar o ZIP.', 'error');
+      return;
+    }
+
+    const entries = collectZipEntries();
+    const maxZip32 = 0xFFFFFFFF;
+    const tooLargeFile = entries.find(entry => !entry.isDirectory && entry.file.size >= maxZip32);
+    const totalInput = entries.reduce((sum, entry) => sum + (entry.isDirectory ? 0 : entry.file.size), 0);
+
+    if (tooLargeFile || totalInput >= maxZip32) {
+      showMessage('Este gerador usa o formato ZIP padrão (ZIP32). Mantenha cada arquivo e o total do pacote abaixo de aproximadamente 4 GB.', 'error');
+      return;
+    }
+
+    els.generate.disabled = true;
+    els.download.disabled = true;
+    els.clearAll.disabled = true;
+    els.company.disabled = true;
+    els.month.disabled = true;
+    els.year.disabled = true;
+    els.progressWrap.hidden = false;
+    updateProgress(0, 'Preparando estrutura…');
+    els.buildStatus.textContent = 'Gerando ZIP…';
+    hideMessage();
+
+    try {
+      const rootName = getRootName();
+      const blob = await buildZipBlob(entries, (percent, label) => updateProgress(percent, label));
+
+      if (state.zipBlobUrl) URL.revokeObjectURL(state.zipBlobUrl);
+      state.zipBlob = blob;
+      state.zipBlobUrl = URL.createObjectURL(blob);
+      state.generatedName = rootName;
+
+      updateProgress(100, 'ZIP concluído');
+      els.download.disabled = false;
+      els.buildStatus.textContent = 'ZIP pronto para download';
+      showMessage(`ZIP gerado com sucesso: ${rootName}.zip (${formatBytes(blob.size)}).`, 'success');
+    } catch (error) {
+      console.error(error);
+      els.buildStatus.textContent = 'Falha ao gerar';
+      showMessage(`Erro ao gerar o ZIP: ${error?.message || 'erro desconhecido'}.`, 'error');
+      invalidateGeneratedZip();
+    } finally {
+      els.generate.disabled = false;
+      els.clearAll.disabled = false;
+      els.company.disabled = false;
+      els.month.disabled = false;
+      els.year.disabled = false;
+    }
+  }
+
+  function collectZipEntries() {
+    const rootName = getRootName();
+    const activeSlotIds = getActiveSlotIds();
+    const folderPaths = state.company === 'DNSA'
+      ? [
+          ['Compras'],
+          ['Compras', 'Tiny'],
+          ['Compras', 'Tiny', 'NFE'],
+          ['Compras', 'Tiny', 'NFC'],
+          ['Compras', 'Mercado Livre'],
+          ['Vendas'],
+          ['Vendas', 'Tiny'],
+          ['Vendas', 'Mercado Livre']
+        ]
+      : [
+          ['Compras'],
+          ['Compras', 'Tiny'],
+          ['Compras', 'Mercado Livre'],
+          ['Vendas'],
+          ['Vendas', 'Tiny'],
+          ['Vendas', 'Mercado Livre']
+        ];
+
+    const entries = [{ name: `${rootName}/`, isDirectory: true, date: new Date() }];
+    folderPaths.forEach(parts => {
+      entries.push({ name: `${rootName}/${parts.join('/')}/`, isDirectory: true, date: new Date() });
+    });
+
+    const usedNames = new Set(entries.map(entry => entry.name.toLocaleLowerCase('pt-BR')));
+
+    activeSlotIds.forEach(slotId => {
+      const def = SLOT_DEFS[slotId];
+      const items = state.slots.get(slotId) || [];
+      items.forEach(item => {
+        const base = `${rootName}/${def.path.join('/')}/${sanitizeRelativePath(item.relativePath || item.file.name)}`;
+        const uniqueName = makeUniqueZipPath(base, usedNames);
+        usedNames.add(uniqueName.toLocaleLowerCase('pt-BR'));
+        entries.push({
+          name: uniqueName,
+          isDirectory: false,
+          file: item.file,
+          date: item.file.lastModified ? new Date(item.file.lastModified) : new Date()
+        });
+      });
+    });
+
+    return entries;
+  }
+
+  function makeUniqueZipPath(path, usedNames) {
+    if (!usedNames.has(path.toLocaleLowerCase('pt-BR'))) return path;
+
+    const slash = path.lastIndexOf('/');
+    const dir = slash >= 0 ? path.slice(0, slash + 1) : '';
+    const fileName = slash >= 0 ? path.slice(slash + 1) : path;
+    const dot = fileName.lastIndexOf('.');
+    const hasExtension = dot > 0;
+    const stem = hasExtension ? fileName.slice(0, dot) : fileName;
+    const ext = hasExtension ? fileName.slice(dot) : '';
+
+    let index = 2;
+    let candidate;
+    do {
+      candidate = `${dir}${stem} (${index})${ext}`;
+      index += 1;
+    } while (usedNames.has(candidate.toLocaleLowerCase('pt-BR')));
+
+    return candidate;
+  }
+
+  async function buildZipBlob(entries, onProgress) {
+    const encoder = new TextEncoder();
+    const localParts = [];
+    const centralParts = [];
+    const records = [];
+    const files = entries.filter(entry => !entry.isDirectory);
+    const totalBytes = files.reduce((sum, entry) => sum + entry.file.size, 0);
+    let bytesScanned = 0;
+
+    // First pass: calculate CRC-32 incrementally, keeping memory usage low.
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      const nameBytes = encoder.encode(entry.name);
+      let crc = 0;
+      let size = 0;
+
+      if (!entry.isDirectory) {
+        size = entry.file.size;
+        crc = await crc32File(entry.file, chunkSize => {
+          bytesScanned += chunkSize;
+          const scanProgress = totalBytes > 0 ? (bytesScanned / totalBytes) * 65 : 65;
+          onProgress(scanProgress, `Lendo: ${entry.file.name}`);
+        });
+      }
+
+      records.push({ ...entry, nameBytes, crc, size });
+    }
+
+    // Second pass: assemble ZIP local headers and original File/Blob objects.
+    let offset = 0;
+    records.forEach((record, index) => {
+      const { dosTime, dosDate } = toDosDateTime(record.date);
+      const flags = 0x0800; // UTF-8 file names.
+      const method = 0; // STORE: no compression; reliable and dependency-free.
+      const externalAttributes = record.isDirectory ? 0x10 : 0;
+      const localHeader = makeLocalHeader(record, flags, method, dosTime, dosDate);
+
+      localParts.push(localHeader);
+      if (!record.isDirectory) localParts.push(record.file);
+
+      centralParts.push(makeCentralHeader(record, flags, method, dosTime, dosDate, offset, externalAttributes));
+      offset += localHeader.byteLength + record.size;
+
+      const assembleProgress = 65 + ((index + 1) / Math.max(records.length, 1)) * 30;
+      onProgress(assembleProgress, record.isDirectory ? 'Montando pastas…' : `Adicionando: ${record.file.name}`);
+    });
+
+    const centralOffset = offset;
+    const centralSize = centralParts.reduce((sum, part) => sum + part.byteLength, 0);
+    const endRecord = makeEndOfCentralDirectory(records.length, centralSize, centralOffset);
+
+    onProgress(98, 'Finalizando ZIP…');
+    await yieldToBrowser();
+
+    return new Blob([...localParts, ...centralParts, endRecord], { type: 'application/zip' });
+  }
+
+  function makeLocalHeader(record, flags, method, dosTime, dosDate) {
+    const buffer = new ArrayBuffer(30 + record.nameBytes.length);
+    const view = new DataView(buffer);
+    let o = 0;
+    o = writeU32(view, o, 0x04034b50);
+    o = writeU16(view, o, 20);
+    o = writeU16(view, o, flags);
+    o = writeU16(view, o, method);
+    o = writeU16(view, o, dosTime);
+    o = writeU16(view, o, dosDate);
+    o = writeU32(view, o, record.crc >>> 0);
+    o = writeU32(view, o, record.size >>> 0);
+    o = writeU32(view, o, record.size >>> 0);
+    o = writeU16(view, o, record.nameBytes.length);
+    o = writeU16(view, o, 0);
+    new Uint8Array(buffer, o).set(record.nameBytes);
+    return new Uint8Array(buffer);
+  }
+
+  function makeCentralHeader(record, flags, method, dosTime, dosDate, localOffset, externalAttributes) {
+    const buffer = new ArrayBuffer(46 + record.nameBytes.length);
+    const view = new DataView(buffer);
+    let o = 0;
+    o = writeU32(view, o, 0x02014b50);
+    o = writeU16(view, o, 20);
+    o = writeU16(view, o, 20);
+    o = writeU16(view, o, flags);
+    o = writeU16(view, o, method);
+    o = writeU16(view, o, dosTime);
+    o = writeU16(view, o, dosDate);
+    o = writeU32(view, o, record.crc >>> 0);
+    o = writeU32(view, o, record.size >>> 0);
+    o = writeU32(view, o, record.size >>> 0);
+    o = writeU16(view, o, record.nameBytes.length);
+    o = writeU16(view, o, 0);
+    o = writeU16(view, o, 0);
+    o = writeU16(view, o, 0);
+    o = writeU16(view, o, 0);
+    o = writeU32(view, o, externalAttributes >>> 0);
+    o = writeU32(view, o, localOffset >>> 0);
+    new Uint8Array(buffer, o).set(record.nameBytes);
+    return new Uint8Array(buffer);
+  }
+
+  function makeEndOfCentralDirectory(entryCount, centralSize, centralOffset) {
+    const buffer = new ArrayBuffer(22);
+    const view = new DataView(buffer);
+    let o = 0;
+    o = writeU32(view, o, 0x06054b50);
+    o = writeU16(view, o, 0);
+    o = writeU16(view, o, 0);
+    o = writeU16(view, o, entryCount);
+    o = writeU16(view, o, entryCount);
+    o = writeU32(view, o, centralSize >>> 0);
+    o = writeU32(view, o, centralOffset >>> 0);
+    writeU16(view, o, 0);
+    return new Uint8Array(buffer);
+  }
+
+  function writeU16(view, offset, value) {
+    view.setUint16(offset, value & 0xFFFF, true);
+    return offset + 2;
+  }
+
+  function writeU32(view, offset, value) {
+    view.setUint32(offset, value >>> 0, true);
+    return offset + 4;
+  }
+
+  function toDosDateTime(date) {
+    const safeDate = date instanceof Date && !Number.isNaN(date.valueOf()) ? date : new Date();
+    const year = Math.max(1980, Math.min(2107, safeDate.getFullYear()));
+    const month = safeDate.getMonth() + 1;
+    const day = safeDate.getDate();
+    const hours = safeDate.getHours();
+    const minutes = safeDate.getMinutes();
+    const seconds = Math.floor(safeDate.getSeconds() / 2);
+
+    return {
+      dosTime: (hours << 11) | (minutes << 5) | seconds,
+      dosDate: ((year - 1980) << 9) | (month << 5) | day
+    };
+  }
+
+  const CRC32_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n += 1) {
+      let c = n;
+      for (let k = 0; k < 8; k += 1) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  async function crc32File(file, onChunk) {
+    let crc = 0xFFFFFFFF;
+
+    if (file.stream && typeof file.stream === 'function') {
+      const reader = file.stream().getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          crc = crc32Update(crc, value);
+          onChunk(value.byteLength);
+          await yieldToBrowser();
+        }
+      } finally {
+        reader.releaseLock?.();
+      }
+    } else {
+      const chunkSize = 2 * 1024 * 1024;
+      for (let start = 0; start < file.size; start += chunkSize) {
+        const chunk = new Uint8Array(await file.slice(start, start + chunkSize).arrayBuffer());
+        crc = crc32Update(crc, chunk);
+        onChunk(chunk.byteLength);
+        await yieldToBrowser();
+      }
+    }
+
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function crc32Update(crc, bytes) {
+    let current = crc >>> 0;
+    for (let i = 0; i < bytes.length; i += 1) {
+      current = CRC32_TABLE[(current ^ bytes[i]) & 0xFF] ^ (current >>> 8);
+    }
+    return current >>> 0;
+  }
+
+  function yieldToBrowser() {
+    return new Promise(resolve => setTimeout(resolve, 0));
+  }
+
+  function updateProgress(value, label) {
+    const rounded = Math.round(value);
+    els.progressBar.style.width = `${rounded}%`;
+    els.progressPercent.textContent = `${rounded}%`;
+    els.progressLabel.textContent = label;
+    els.progressTrack.setAttribute('aria-valuenow', String(rounded));
+  }
+
+  function invalidateGeneratedZip() {
+    if (state.zipBlobUrl) {
+      URL.revokeObjectURL(state.zipBlobUrl);
+      state.zipBlobUrl = null;
+    }
+    state.zipBlob = null;
+    state.generatedName = '';
+    els.download.disabled = true;
+    els.buildStatus.textContent = 'Pronto para gerar';
+    els.progressWrap.hidden = true;
+    updateProgress(0, 'Preparando arquivos…');
+  }
+
+  function showMessage(text, type) {
+    els.message.textContent = text;
+    els.message.className = 'message-box';
+    if (type) els.message.classList.add(type);
+    els.message.hidden = false;
+  }
+
+  function hideMessage() {
+    els.message.hidden = true;
+    els.message.textContent = '';
+    els.message.className = 'message-box';
+  }
+
+  function sanitizeRelativePath(path) {
+    return String(path || 'arquivo')
+      .replace(/\\/g, '/')
+      .split('/')
+      .filter(part => part && part !== '.' && part !== '..')
+      .map(part => sanitizeFilename(part))
+      .join('/');
+  }
+
+  function sanitizeFilename(name) {
+    return String(name || 'arquivo')
+      .replace(/[<>:"|?*\u0000-\u001F]/g, '_')
+      .trim() || 'arquivo';
+  }
+
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / Math.pow(1024, index);
+    return `${value.toLocaleString('pt-BR', { maximumFractionDigits: index === 0 ? 0 : 1 })} ${units[index]}`;
+  }
+
+  function clampNumber(value, min, max, fallback) {
+    if (!Number.isFinite(value)) return fallback;
+    return Math.min(max, Math.max(min, value));
+  }
+
+  window.addEventListener('beforeunload', () => {
+    if (state.zipBlobUrl) URL.revokeObjectURL(state.zipBlobUrl);
+  });
+
+  init();
+})();
+
+  </script>
+</body>
+</html>
