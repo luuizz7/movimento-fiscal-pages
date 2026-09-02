@@ -1,20 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Organizador de Movimento Fiscal para DNSA/NSA, com geração local de ZIP." />
   <title>Movimento Fiscal | DNSA / NSA</title>
-  <script>
-    // Tema escuro é o padrão. Se o usuário já escolheu um tema, respeita a preferência salva.
-    try {
-      const savedTheme = localStorage.getItem('movimentoFiscalTheme');
-      document.documentElement.dataset.theme =
-        savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
-    } catch (_) {
-      document.documentElement.dataset.theme = 'dark';
-    }
-  </script>
   <style>
 :root {
   /* Tema claro: fundo cinza suave + cartões brancos para criar separação visual. */
@@ -554,7 +544,242 @@ footer {
   footer { flex-direction: column; }
 }
 
-  </style>
+/* === Refinos de hierarquia visual e validação === */
+.tree-branches {
+  gap: 28px;
+}
+
+.branch-card {
+  position: relative;
+  border-width: 1px;
+}
+
+.branch-title {
+  min-height: 92px;
+  padding: 18px 20px;
+}
+
+.branch-heading-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.branch-kicker {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  opacity: .72;
+}
+
+.branch-title h3 {
+  margin: 0;
+  font-size: clamp(27px, 3vw, 34px);
+  line-height: .95;
+  letter-spacing: -.025em;
+  font-weight: 950;
+}
+
+.compras-card {
+  border-color: #d4d400;
+}
+
+.compras-card .branch-title {
+  background: var(--yellow);
+  color: #050505;
+  border-bottom-color: #d4d400;
+}
+
+.compras-card .folder-chip {
+  background: #090909;
+  color: var(--yellow);
+  border-color: #090909;
+}
+
+.vendas-card {
+  border-color: var(--preview-border);
+}
+
+.vendas-card .branch-title {
+  background: #090a0c;
+  color: #ffffff;
+  border-bottom: 4px solid var(--yellow);
+}
+
+.vendas-card .folder-chip {
+  background: var(--yellow);
+  color: #000000;
+  border-color: #d4d400;
+}
+
+html[data-theme="light"] .vendas-card .branch-title {
+  background: #17191d;
+  color: #ffffff;
+}
+
+.branch-content {
+  padding: 20px;
+  gap: 22px;
+}
+
+.sub-branch + .sub-branch {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.sub-branch-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.slot-heading {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.slot-status-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  margin-left: auto;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.slot-status-icon.is-missing {
+  color: #e74747;
+  background: rgba(231, 71, 71, .10);
+}
+
+.slot-status-icon.is-complete {
+  color: #35c86f;
+  background: rgba(53, 200, 111, .10);
+}
+
+.dropzone.is-missing {
+  border-color: color-mix(in srgb, #e74747 58%, var(--drop-border));
+}
+
+.dropzone.is-complete {
+  border-color: color-mix(in srgb, #35c86f 58%, var(--drop-border));
+  border-style: solid;
+}
+
+/* Modal de confirmação para ZIP incompleto */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(5px);
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-top: 5px solid var(--yellow);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .45);
+  padding: 24px;
+}
+
+.modal-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: var(--yellow);
+  color: #000;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.modal-copy h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.modal-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.missing-files-list {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.missing-files-list li {
+  position: relative;
+  padding: 10px 12px 10px 38px;
+  border: 1px solid var(--error-border);
+  border-radius: 10px;
+  background: var(--error-bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.missing-files-list li::before {
+  content: "×";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #e74747;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 820px) {
+  .tree-branches { gap: 24px; }
+}
+
+@media (max-width: 600px) {
+  .branch-title { min-height: 80px; padding: 16px; }
+  .branch-content { padding: 16px; }
+  .modal-backdrop { padding: 14px; }
+  .modal-card { padding: 20px; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn { width: 100%; }
+}
+
+</style>
 </head>
 <body>
   <main class="page-shell">
@@ -566,8 +791,8 @@ footer {
       </div>
       <div class="hero-actions">
         <button id="theme-toggle" class="btn btn-ghost theme-toggle" type="button" aria-pressed="false" title="Alternar entre tema claro e escuro">
-          <span id="theme-icon" class="theme-icon" aria-hidden="true">☾</span>
-          <span id="theme-label">Tema escuro</span>
+          <span id="theme-icon" class="theme-icon" aria-hidden="true">☀</span>
+          <span id="theme-label">Tema claro</span>
         </button>
         <div class="privacy-badge" title="Os arquivos não saem do seu computador.">
           <span class="privacy-dot" aria-hidden="true"></span>
@@ -631,10 +856,13 @@ footer {
         </div>
 
         <div class="tree-branches">
-          <section class="branch-card" aria-labelledby="compras-heading">
+          <section class="branch-card compras-card" aria-labelledby="compras-heading">
             <div class="branch-title">
-              <span class="folder-chip">PASTA</span>
-              <h3 id="compras-heading">Compras</h3>
+              <span class="folder-chip">ENTRADAS</span>
+              <div class="branch-heading-copy">
+                <span class="branch-kicker">ARQUIVOS DE</span>
+                <h3 id="compras-heading">COMPRAS</h3>
+              </div>
             </div>
 
             <div class="branch-content">
@@ -658,10 +886,13 @@ footer {
             </div>
           </section>
 
-          <section class="branch-card" aria-labelledby="vendas-heading">
+          <section class="branch-card vendas-card" aria-labelledby="vendas-heading">
             <div class="branch-title">
-              <span class="folder-chip">PASTA</span>
-              <h3 id="vendas-heading">Vendas</h3>
+              <span class="folder-chip">SAÍDAS</span>
+              <div class="branch-heading-copy">
+                <span class="branch-kicker">ARQUIVOS DE</span>
+                <h3 id="vendas-heading">VENDAS</h3>
+              </div>
             </div>
 
             <div class="branch-content">
@@ -729,10 +960,11 @@ footer {
       <input class="folder-input" type="file" multiple webkitdirectory directory hidden />
       <div class="dropzone-main">
         <div class="drop-icon" aria-hidden="true">＋</div>
-        <div>
+        <div class="slot-heading">
           <strong class="slot-title"></strong>
           <p class="slot-path"></p>
         </div>
+        <span class="slot-status-icon is-missing" aria-label="Arquivo faltando" title="Arquivo faltando">×</span>
       </div>
       <div class="dropzone-actions">
         <button class="btn btn-small select-files-btn" type="button">Selecionar arquivos</button>
@@ -746,6 +978,23 @@ footer {
       <ul class="file-list"></ul>
     </div>
   </template>
+
+
+
+  <div id="missing-modal" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="missing-modal-title" aria-describedby="missing-modal-text">
+      <div class="modal-icon" aria-hidden="true">!</div>
+      <div class="modal-copy">
+        <h2 id="missing-modal-title">Há arquivos faltando</h2>
+        <p id="missing-modal-text">Algumas pastas ainda estão vazias. Deseja gerar o ZIP mesmo assim?</p>
+        <ul id="missing-files-list" class="missing-files-list"></ul>
+      </div>
+      <div class="modal-actions">
+        <button id="missing-cancel-btn" class="btn btn-ghost" type="button">Voltar e completar</button>
+        <button id="missing-confirm-btn" class="btn btn-primary" type="button">Gerar assim mesmo</button>
+      </div>
+    </section>
+  </div>
 
   <script>
 (() => {
@@ -797,7 +1046,11 @@ footer {
     template: document.getElementById('drop-slot-template'),
     themeToggle: document.getElementById('theme-toggle'),
     themeIcon: document.getElementById('theme-icon'),
-    themeLabel: document.getElementById('theme-label')
+    themeLabel: document.getElementById('theme-label'),
+    missingModal: document.getElementById('missing-modal'),
+    missingFilesList: document.getElementById('missing-files-list'),
+    missingCancel: document.getElementById('missing-cancel-btn'),
+    missingConfirm: document.getElementById('missing-confirm-btn')
   };
 
   function init() {
@@ -874,7 +1127,21 @@ footer {
       showMessage('Todos os arquivos foram removidos.', '');
     });
 
-    els.generate.addEventListener('click', generateZip);
+    els.generate.addEventListener('click', () => generateZip());
+
+    els.missingCancel.addEventListener('click', closeMissingModal);
+    els.missingConfirm.addEventListener('click', () => {
+      closeMissingModal();
+      generateZip({ skipMissingCheck: true });
+    });
+
+    els.missingModal.addEventListener('click', event => {
+      if (event.target === els.missingModal) closeMissingModal();
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !els.missingModal.hidden) closeMissingModal();
+    });
 
     els.download.addEventListener('click', () => {
       if (!state.zipBlobUrl || !state.zipBlob) return;
@@ -891,11 +1158,6 @@ footer {
     const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
-
-    try {
-      localStorage.setItem('movimentoFiscalTheme', next);
-    } catch (_) {}
-
     syncThemeButton();
   }
 
@@ -1100,10 +1362,20 @@ footer {
     const items = state.slots.get(slotId) || [];
     const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
 
-    node.classList.toggle('has-files', items.length > 0);
+    const hasFiles = items.length > 0;
+    node.classList.toggle('has-files', hasFiles);
+    node.classList.toggle('is-complete', hasFiles);
+    node.classList.toggle('is-missing', !hasFiles);
     node.querySelector('.slot-count').textContent = `${items.length} ${items.length === 1 ? 'arquivo' : 'arquivos'}`;
     node.querySelector('.slot-size').textContent = formatBytes(totalBytes);
-    node.querySelector('.clear-slot-btn').disabled = items.length === 0;
+    node.querySelector('.clear-slot-btn').disabled = !hasFiles;
+
+    const statusIcon = node.querySelector('.slot-status-icon');
+    statusIcon.textContent = hasFiles ? '✓' : '×';
+    statusIcon.classList.toggle('is-complete', hasFiles);
+    statusIcon.classList.toggle('is-missing', !hasFiles);
+    statusIcon.setAttribute('aria-label', hasFiles ? 'Arquivo adicionado' : 'Arquivo faltando');
+    statusIcon.title = hasFiles ? 'Arquivo adicionado' : 'Arquivo faltando';
 
     const list = node.querySelector('.file-list');
     list.innerHTML = '';
@@ -1166,7 +1438,7 @@ footer {
     return `Movimento Fiscal (${state.company}) (${monthName}) de (${safeYear})`;
   }
 
-  async function generateZip() {
+  async function generateZip({ skipMissingCheck = false } = {}) {
     const year = clampNumber(Number(els.year.value), 2000, 2100, NaN);
     if (!Number.isFinite(year)) {
       showMessage('Informe um ano válido entre 2000 e 2100.', 'error');
@@ -1176,11 +1448,9 @@ footer {
     state.year = year;
     els.year.value = String(year);
 
-    const activeSlotIds = getActiveSlotIds();
-    const fileCount = activeSlotIds.reduce((sum, id) => sum + (state.slots.get(id) || []).length, 0);
-
-    if (fileCount === 0) {
-      showMessage('Adicione pelo menos um arquivo antes de gerar o ZIP.', 'error');
+    const missingSlots = getMissingSlots();
+    if (missingSlots.length > 0 && !skipMissingCheck) {
+      openMissingModal(missingSlots);
       return;
     }
 
@@ -1230,6 +1500,36 @@ footer {
       els.month.disabled = false;
       els.year.disabled = false;
     }
+  }
+
+  function getMissingSlots() {
+    return getActiveSlotIds().filter(id => (state.slots.get(id) || []).length === 0);
+  }
+
+  function getSlotDisplayName(slotId) {
+    const def = SLOT_DEFS[slotId];
+    if (!def) return slotId;
+    return def.path.join(' › ');
+  }
+
+  function openMissingModal(missingSlotIds) {
+    els.missingFilesList.innerHTML = '';
+    missingSlotIds.forEach(slotId => {
+      const li = document.createElement('li');
+      li.textContent = getSlotDisplayName(slotId);
+      els.missingFilesList.appendChild(li);
+    });
+
+    els.missingModal.hidden = false;
+    document.body.classList.add('modal-open');
+    els.missingCancel.focus();
+  }
+
+  function closeMissingModal() {
+    if (els.missingModal.hidden) return;
+    els.missingModal.hidden = true;
+    document.body.classList.remove('modal-open');
+    els.generate.focus();
   }
 
   function collectZipEntries() {
@@ -1565,6 +1865,6 @@ footer {
   init();
 })();
 
-  </script>
+</script>
 </body>
 </html>
