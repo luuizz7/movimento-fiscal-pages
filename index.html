@@ -939,12 +939,14 @@ body.modal-open {
             </div>
 
             <div class="branch-content">
-              <div class="sub-branch">
+              <div class="sub-branch single-slot-branch">
                 <div class="sub-branch-title">
                   <span class="connector-dot" aria-hidden="true"></span>
                   <strong>Tiny</strong>
                 </div>
-                <div id="compras-tiny-slots" class="slot-grid"></div>
+                <div class="slot-grid">
+                  <div class="drop-slot" data-slot="compras_tiny"></div>
+                </div>
               </div>
 
               <div class="sub-branch single-slot-branch">
@@ -969,14 +971,12 @@ body.modal-open {
             </div>
 
             <div class="branch-content">
-              <div class="sub-branch single-slot-branch">
+              <div class="sub-branch">
                 <div class="sub-branch-title">
                   <span class="connector-dot" aria-hidden="true"></span>
                   <strong>Tiny</strong>
                 </div>
-                <div class="slot-grid">
-                  <div class="drop-slot" data-slot="vendas_tiny"></div>
-                </div>
+                <div id="vendas-tiny-slots" class="slot-grid"></div>
               </div>
 
               <div class="sub-branch single-slot-branch">
@@ -1079,11 +1079,11 @@ body.modal-open {
   ];
 
   const SLOT_DEFS = {
-    compras_tiny_nfe: { title: 'NFE', path: ['Compras', 'Tiny', 'NFE'] },
-    compras_tiny_nfce: { title: 'NFC', path: ['Compras', 'Tiny', 'NFC'] },
-    compras_tiny_nsa: { title: 'Arquivos', path: ['Compras', 'Tiny'] },
+    compras_tiny: { title: 'Arquivos', path: ['Compras', 'Tiny'] },
     compras_ml: { title: 'Arquivos', path: ['Compras', 'Mercado Livre'] },
-    vendas_tiny: { title: 'Arquivos', path: ['Vendas', 'Tiny'] },
+    vendas_tiny_nfe: { title: 'NFE', path: ['Vendas', 'Tiny', 'NFE'] },
+    vendas_tiny_nfce: { title: 'NFC', path: ['Vendas', 'Tiny', 'NFC'] },
+    vendas_tiny_nsa: { title: 'Arquivos', path: ['Vendas', 'Tiny'] },
     vendas_ml: { title: 'Arquivos', path: ['Vendas', 'Mercado Livre'] }
   };
 
@@ -1103,7 +1103,7 @@ body.modal-open {
     year: document.getElementById('year-input'),
     namePreview: document.getElementById('zip-name-preview'),
     treeRootName: document.getElementById('tree-root-name'),
-    comprasTinySlots: document.getElementById('compras-tiny-slots'),
+    vendasTinySlots: document.getElementById('vendas-tiny-slots'),
     totalFiles: document.getElementById('total-files'),
     totalSize: document.getElementById('total-size'),
     clearAll: document.getElementById('clear-all-btn'),
@@ -1153,14 +1153,14 @@ body.modal-open {
       const previousCompany = state.company;
       state.company = els.company.value;
 
-      // Preserve Tiny/Compras files when switching company in the most intuitive way possible.
+      // Preserve Tiny/Vendas files when switching from DNSA (NFE + NFC) to NSA (single slot).
       if (previousCompany === 'DNSA' && state.company === 'NSA') {
         const merged = [
-          ...(state.slots.get('compras_tiny_nfe') || []),
-          ...(state.slots.get('compras_tiny_nfce') || [])
+          ...(state.slots.get('vendas_tiny_nfe') || []),
+          ...(state.slots.get('vendas_tiny_nfce') || [])
         ];
-        if (merged.length && !(state.slots.get('compras_tiny_nsa') || []).length) {
-          state.slots.set('compras_tiny_nsa', dedupeFiles(merged));
+        if (merged.length && !(state.slots.get('vendas_tiny_nsa') || []).length) {
+          state.slots.set('vendas_tiny_nsa', dedupeFiles(merged));
         }
       }
 
@@ -1280,21 +1280,39 @@ body.modal-open {
     els.themeToggle.setAttribute('aria-label', isDark ? 'Ativar tema claro' : 'Ativar tema escuro');
   }
 
-  function renderDynamicSlots() {
-    els.comprasTinySlots.innerHTML = '';
+    function renderDynamicSlots() {
+    els.vendasTinySlots.innerHTML = '';
 
-    const tinySlots = state.company === 'DNSA'
-      ? ['compras_tiny_nfe', 'compras_tiny_nfce']
-      : ['compras_tiny_nsa'];
+    const isNSA = state.company === 'NSA';
+
+    const tinySlots = isNSA
+      ? ['vendas_tiny_nsa']
+      : ['vendas_tiny_nfe', 'vendas_tiny_nfce'];
+
+    // NSA = uma aba ocupando 100% da largura
+    // DNSA = NFE e NFC lado a lado
+    els.vendasTinySlots.style.gridTemplateColumns = isNSA
+      ? '1fr'
+      : 'repeat(2, minmax(0, 1fr))';
 
     tinySlots.forEach(id => {
       const holder = document.createElement('div');
+
       holder.className = 'drop-slot';
       holder.dataset.slot = id;
-      els.comprasTinySlots.appendChild(holder);
+
+      // GARANTE QUE NO NSA O CAMPO OCUPE A LARGURA TODA
+      if (isNSA) {
+        holder.style.width = '100%';
+        holder.style.gridColumn = '1 / -1';
+      }
+
+      els.vendasTinySlots.appendChild(holder);
     });
 
-    document.querySelectorAll('.drop-slot').forEach(mountDropSlot);
+    document
+      .querySelectorAll('.drop-slot')
+      .forEach(mountDropSlot);
   }
 
   function mountDropSlot(holder) {
@@ -1645,8 +1663,8 @@ body.modal-open {
 
   function getActiveSlotIds() {
     return state.company === 'DNSA'
-      ? ['compras_tiny_nfe', 'compras_tiny_nfce', 'compras_ml', 'vendas_tiny', 'vendas_ml']
-      : ['compras_tiny_nsa', 'compras_ml', 'vendas_tiny', 'vendas_ml'];
+      ? ['compras_tiny', 'compras_ml', 'vendas_tiny_nfe', 'vendas_tiny_nfce', 'vendas_ml']
+      : ['compras_tiny', 'compras_ml', 'vendas_tiny_nsa', 'vendas_ml'];
   }
 
   function getRootName() {
@@ -1755,11 +1773,11 @@ body.modal-open {
       ? [
           ['Compras'],
           ['Compras', 'Tiny'],
-          ['Compras', 'Tiny', 'NFE'],
-          ['Compras', 'Tiny', 'NFC'],
           ['Compras', 'Mercado Livre'],
           ['Vendas'],
           ['Vendas', 'Tiny'],
+          ['Vendas', 'Tiny', 'NFE'],
+          ['Vendas', 'Tiny', 'NFC'],
           ['Vendas', 'Mercado Livre']
         ]
       : [
